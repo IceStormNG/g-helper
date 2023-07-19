@@ -82,6 +82,8 @@ public class NativeMethods
         public Guid GlobalUserPresence { get; } = new Guid("786E8A1D-B427-4344-9207-09E70BDCBEA9");
         // 0=Monitor Off, 1=Monitor On.
         public Guid MonitorPowerGuid { get; } = new Guid("02731015-4510-4526-99e6-e5a17ebd1aea");
+        // 0=Monitor Off, 1=Monitor On.
+        public Guid LidSwitchGuid { get; } = new Guid("BA3E0F4D-B817-4094-A2D1-D56379E6A0F3");
         // 0=Battery Saver Off, 1=Battery Saver On.
         public Guid PowerSavingStatus { get; } = new Guid("E00958C0-C213-4ACE-AC77-FECCED2EEEA5");
 

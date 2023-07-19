@@ -26,6 +26,40 @@ namespace GHelper.Helpers
             return false;
         }
 
+        public bool IsInternalDisplayConnected()
+        {
+            var devices = ScreenInterrogatory.GetAllDevices2().ToArray();
+
+            foreach (var device in devices)
+            {
+                if (device.outputTechnology == ScreenInterrogatory.DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL ||
+                    device.outputTechnology == ScreenInterrogatory.DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED)
+                {
+                    Logger.WriteLine("Found internal screen: " + device.monitorFriendlyDeviceName + ":" + device.outputTechnology.ToString());
+
+                    //Already found one, we do not have to check whether there are more
+                    return true;
+                }
+
+            }
+
+            return false;
+        }
+
+        public bool IsLidClosed()
+        {
+            return !SettingsForm.lidOpen;
+        }
+
+
+        public void PrintClamshellStatus()
+        {
+            Logger.WriteLine("Clamshell: " + IsClamshellEnabled() + ", External Screen: " + 
+                IsExternalDisplayConnected() + ", Internal Screen: " + 
+                IsInternalDisplayConnected() + ", Lid Closed: " + IsLidClosed());
+        }
+    
+
         public bool IsClamshellEnabled()
         {
             return AppConfig.Get("toggle_clamshell_mode") != 0;
@@ -43,6 +77,7 @@ namespace GHelper.Helpers
 
         public void ToggleLidAction()
         {
+            PrintClamshellStatus();
             if (IsInClamshellMode() && IsClamshellEnabled())
             {
                 PowerNative.SetLidAction(0, true);
@@ -52,6 +87,16 @@ namespace GHelper.Helpers
             {
                 PowerNative.SetLidAction(1, true);
                 Logger.WriteLine("Disengaging Clamshell Mode");
+
+                if (IsClamshellEnabled())
+                {
+                    //Check whether lid is closed while screen was disconnected
+                    if(!IsInternalDisplayConnected() && !IsExternalDisplayConnected())
+                    {
+                        Logger.WriteLine("Lid still closed. Putting laptop to sleep");
+                        PowerNative.InitiateSleep();
+                    }
+                }
             }
         }
 

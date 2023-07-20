@@ -72,6 +72,7 @@ namespace GHelper.Mode
         [DllImportAttribute("powrprof.dll", EntryPoint = "PowerSetActiveOverlayScheme")]
         public static extern uint PowerSetActiveOverlayScheme(Guid OverlaySchemeGuid);
 
+
         static Guid GetActiveScheme()
         {
             IntPtr pActiveSchemeGuid;

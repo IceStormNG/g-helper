@@ -297,25 +297,6 @@ namespace GHelper.Display
                     yield return DeviceName(displayModes[i].adapterId, displayModes[i].id);
         }
 
-        public static IEnumerable<DISPLAYCONFIG_TARGET_DEVICE_NAME> GetAllDevices2()
-        {
-            uint pathCount, modeCount;
-            var error = GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS.QDC_ALL_PATHS, out pathCount, out modeCount);
-            if (error != ERROR_SUCCESS)
-                throw new Win32Exception(error);
-
-            var displayPaths = new DISPLAYCONFIG_PATH_INFO[pathCount];
-            var displayModes = new DISPLAYCONFIG_MODE_INFO[modeCount];
-            error = QueryDisplayConfig(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
-                ref pathCount, displayPaths, ref modeCount, displayModes, nint.Zero);
-            if (error != ERROR_SUCCESS)
-                throw new Win32Exception(error);
-
-            for (var i = 0; i < modeCount; i++)
-                if (displayModes[i].infoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET)
-                    yield return DeviceName(displayModes[i].adapterId, displayModes[i].id);
-        }
-
     }
 
 }

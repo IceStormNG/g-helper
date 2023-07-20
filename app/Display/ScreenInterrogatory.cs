@@ -297,6 +297,7 @@ namespace GHelper.Display
                     yield return DeviceName(displayModes[i].adapterId, displayModes[i].id);
         }
 
+
     }
 
 }

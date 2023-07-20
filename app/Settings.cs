@@ -9,7 +9,6 @@ using GHelper.Mode;
 using GHelper.UI;
 using System.Diagnostics;
 using System.Timers;
-using static NativeMethods;
 
 namespace GHelper
 {
@@ -27,8 +26,6 @@ namespace GHelper
         public AniMatrixControl matrix;
 
         public static System.Timers.Timer sensorTimer = default!;
-
-        public static bool lidOpen = true;
 
         public Fans? fans;
         public Extra? keyb;
@@ -207,20 +204,6 @@ namespace GHelper
             }
         }
 
-        private void LidStatusChanged(bool isLidOpen)
-        {
-            if (isLidOpen)
-            {
-                //Do some action on lid open event
-                Debug.WriteLine("{0}: Lid opened!", DateTime.Now);
-            }
-            else
-            {
-                //Do some action on lid close event
-                Debug.WriteLine("{0}: Lid closed!", DateTime.Now);
-            }
-        }
-
         protected override void WndProc(ref Message m)
         {
 
@@ -230,31 +213,20 @@ namespace GHelper
                     if (m.WParam == (IntPtr)NativeMethods.PBT_POWERSETTINGCHANGE)
                     {
                         var settings = (NativeMethods.POWERBROADCAST_SETTING)m.GetLParam(typeof(NativeMethods.POWERBROADCAST_SETTING));
-
-                        if (settings.PowerSetting == (new NativeMethods.PowerSettingGuid()).LidSwitchGuid)
+                        switch (settings.Data)
                         {
-                            lidOpen = settings.Data != 0;
-                            Logger.WriteLine("Lid " + (lidOpen ? "opened" : "closed"));
+                            case 0:
+                                Logger.WriteLine("Monitor Power Off");
+                                AsusUSB.ApplyBrightness(0);
+                                break;
+                            case 1:
+                                Logger.WriteLine("Monitor Power On");
+                                Program.SetAutoModes();
+                                break;
+                            case 2:
+                                Logger.WriteLine("Monitor Dimmed");
+                                break;
                         }
-
-                        if (settings.PowerSetting == (new NativeMethods.PowerSettingGuid()).ConsoleDisplayState)
-                        {
-                            switch (settings.Data)
-                            {
-                                case 0:
-                                    Logger.WriteLine("Monitor Power Off");
-                                    AsusUSB.ApplyBrightness(0);
-                                    break;
-                                case 1:
-                                    Logger.WriteLine("Monitor Power On");
-                                    Program.SetAutoModes();
-                                    break;
-                                case 2:
-                                    Logger.WriteLine("Monitor Dimmed");
-                                    break;
-                            }
-                        }
-
                     }
                     m.Result = (IntPtr)1;
                     break;

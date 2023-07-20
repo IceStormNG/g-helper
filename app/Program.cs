@@ -35,7 +35,6 @@ namespace GHelper
         public static ToastForm toast = new ToastForm();
 
         public static IntPtr unRegPowerNotify;
-        public static IntPtr unRegLidNotify;
 
         private static long lastAuto;
         private static long lastTheme;
@@ -107,7 +106,7 @@ namespace GHelper
             // Subscribing for monitor power on events
             PowerSettingGuid settingGuid = new NativeMethods.PowerSettingGuid();
             unRegPowerNotify = NativeMethods.RegisterPowerSettingNotification(settingsForm.Handle, settingGuid.ConsoleDisplayState, NativeMethods.DEVICE_NOTIFY_WINDOW_HANDLE);
-            unRegLidNotify = NativeMethods.RegisterPowerSettingNotification(settingsForm.Handle, settingGuid.LidSwitchGuid, NativeMethods.DEVICE_NOTIFY_WINDOW_HANDLE);
+
 
             if (Environment.CurrentDirectory.Trim('\\') == Application.StartupPath.Trim('\\') || action.Length > 0)
             {
@@ -244,7 +243,6 @@ namespace GHelper
             trayIcon.Visible = false;
             clamshellControl.UnregisterDisplayEvents();
             NativeMethods.UnregisterPowerSettingNotification(unRegPowerNotify);
-            NativeMethods.UnregisterPowerSettingNotification(unRegLidNotify);
             Application.Exit();
         }
 

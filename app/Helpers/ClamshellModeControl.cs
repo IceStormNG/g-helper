@@ -51,7 +51,7 @@ namespace GHelper.Helpers
 
         public bool IsLidClosed()
         {
-            return !SettingsForm.lidOpen;
+            return !IsInternalDisplayConnected();
         }
 
 
@@ -91,15 +91,6 @@ namespace GHelper.Helpers
                 PowerNative.SetLidAction(1, true);
                 Logger.WriteLine("Disengaging Clamshell Mode");
 
-                if (IsClamshellEnabled())
-                {
-                    //Check whether lid is closed while screen was disconnected
-                    if(!IsInternalDisplayConnected() && !IsExternalDisplayConnected())
-                    {
-                        Logger.WriteLine("Lid still closed. Putting laptop to sleep");
-                        PowerNative.InitiateSleep();
-                    }
-                }
             }
         }
 

@@ -131,6 +131,15 @@ namespace GHelper
             RefreshMouseData();
         }
 
+        public void ToggleBindingsPanel(bool show)
+        {
+            if (!mouse.HasButtonBindings()) show = false;
+            tableRoot.ColumnStyles[0] = show
+                ? new ColumnStyle(SizeType.AutoSize)
+                : new ColumnStyle(SizeType.Absolute, 0);
+            panelLeft.Visible = show;
+        }
+
         private void SliderAcceleration_MouseUp(object? sender, MouseEventArgs e)
         {
             mouse.SetAcceleration(sliderAcceleration.Value);
@@ -602,6 +611,7 @@ namespace GHelper
 
             VisualizeMouseSettings();
             VisualizeBatteryState();
+            ToggleBindingsPanel(mouse.ButtonBindingsReady);
         }
 
         private void InitMouseCapabilities()
@@ -805,6 +815,185 @@ namespace GHelper
             {
                 panelLighting.Visible = false;
             }
+
+            if (mouse.HasButtonBindings())
+            {
+                InitBindingCombos();
+                ControlHelper.Adjust(this);
+            }
+        }
+
+        private bool _updatingBindings;
+        private readonly List<UI.RComboBox> _bindingCombos = new();
+        private object[] _bindingComboItems = [];
+
+        private object[] BuildBindingComboItems()
+        {
+            var list = new List<object>();
+            foreach (var (groupLabel, items) in mouse.BindingGroups)
+            {
+                list.Add(new BindingSeparator(groupLabel));
+                foreach (var (code, name) in items)
+                    list.Add(new BindingItem(code, name));
+            }
+            return list.ToArray();
+        }
+
+        private void InitBindingCombos()
+        {
+            var slots = mouse.ButtonSlots;
+            _bindingComboItems = BuildBindingComboItems();
+
+            float s = DeviceDpi / 192f;
+
+            // Start below whichever is lower: the header or the mouse layout picture
+            int startY = Math.Max(panelBindingsHeader.Bottom, pictureMouseLayout.Bottom) + (int)(12 * s);
+            int rowHeight = (int)(52 * s);
+            int row = 0;
+            foreach (var (slot, (_, name)) in slots)
+            {
+                int y = startY + row * rowHeight;
+                var lbl = new Label
+                {
+                    Text = name,
+                    Location = new Point((int)(14 * s), y + (int)(14 * s)),
+                    Size = new Size((int)(200 * s), (int)(32 * s)),
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    ForeColor = RForm.foreMain,
+                };
+                var cmb = new UI.RComboBox
+                {
+                    Location = new Point((int)(220 * s), y + (int)(10 * s)),
+                    Size = new Size((int)(260 * s), (int)(40 * s)),
+                    Margin = new Padding(0, (int)(6 * s), (int)(6 * s), (int)(6 * s)),
+                    DropDownStyle = ComboBoxStyle.DropDownList,
+                    FlatStyle = FlatStyle.Flat,
+                    DrawMode = DrawMode.OwnerDrawFixed,
+                    ItemHeight = comboProfile.ItemHeight,
+                    BackColor = RForm.buttonMain,
+                    ForeColor = RForm.foreMain,
+                    BorderColor = RForm.buttonMain,
+                    ButtonColor = RForm.buttonMain,
+                    ArrowColor = RForm.foreMain,
+                };
+                cmb.Items.AddRange(_bindingComboItems);
+                cmb.Tag = slot;
+                cmb.DrawItem += BindingCombo_DrawItem;
+                cmb.SelectedIndexChanged += BindingCombo_Changed;
+                panelLeft.Controls.Add(lbl);
+                panelLeft.Controls.Add(cmb);
+                _bindingCombos.Add(cmb);
+                row++;
+            }
+
+            // Reset Bindings button below all rows
+            int btnY = startY + row * rowHeight + (int)(8 * s);
+            var btnReset = new UI.RButton
+            {
+                Text = "Reset Bindings",
+                Location = new Point((int)(14 * s), btnY),
+                Size = new Size((int)(466 * s), (int)(50 * s)),
+                FlatStyle = FlatStyle.Flat,
+                Margin = new Padding((int)(4 * s), (int)(8 * s), (int)(4 * s), (int)(8 * s)),
+                BackColor = SystemColors.ButtonHighlight,
+                ForeColor = SystemColors.ControlText,
+                BorderColor = Color.Transparent,
+                BorderRadius = 2,
+                Activated = false,
+                Secondary = false,
+                UseVisualStyleBackColor = false,
+            };
+            btnReset.Click += ButtonResetBindings_Click;
+            panelLeft.Controls.Add(btnReset);
+        }
+
+        private static void BindingCombo_DrawItem(object? sender, DrawItemEventArgs e)
+        {
+            if (e.Index < 0 || sender is not ComboBox cmb) return;
+
+            object obj = cmb.Items[e.Index];
+            bool isSep = obj is BindingSeparator;
+
+            Color back = isSep ? RForm.buttonSecond : RForm.buttonMain;
+            Color fore = isSep ? RForm.foreMain     : RForm.foreMain;
+
+            if (!isSep && (e.State & DrawItemState.Selected) != 0)
+                back = RForm.borderMain;
+
+            using var backBrush = new SolidBrush(back);
+            e.Graphics.FillRectangle(backBrush, e.Bounds);
+
+            string text = obj.ToString() ?? string.Empty;
+            Font font = isSep
+                ? new Font(e.Font ?? SystemFonts.DefaultFont, FontStyle.Bold)
+                : (e.Font ?? SystemFonts.DefaultFont);
+
+            int indent = isSep ? 6 : 14;
+            var textRect = new Rectangle(e.Bounds.X + indent, e.Bounds.Y,
+                                         e.Bounds.Width - indent, e.Bounds.Height);
+
+            using var foreBrush = new SolidBrush(fore);
+            e.Graphics.DrawString(text, font, foreBrush, textRect,
+                new StringFormat { LineAlignment = StringAlignment.Center });
+
+            if (isSep) font.Dispose();
+        }
+
+        private void ButtonResetBindings_Click(object? sender, EventArgs e)
+        {
+            mouse.ResetButtonBindings();
+            VisualizeButtonBindings();
+        }
+
+        private void BindingCombo_Changed(object? sender, EventArgs e)
+        {
+            if (_updatingBindings || sender is not UI.RComboBox cmb || cmb.Tag is not int slot) return;
+            if (cmb.SelectedItem is BindingSeparator)
+            {
+                // Separator selected — step forward to first real item in group
+                int next = cmb.SelectedIndex + 1;
+                if (next < cmb.Items.Count && cmb.Items[next] is BindingItem)
+                    cmb.SelectedIndex = next;
+                return;
+            }
+            if (cmb.SelectedItem is BindingItem item)
+                mouse.SetButtonBinding(slot, item.Code);
+        }
+
+        private void VisualizeButtonBindings()
+        {
+            if (!mouse.HasButtonBindings()) return;
+            var slots = mouse.ButtonSlots;
+            _updatingBindings = true;
+            int row = 0;
+            foreach (var slot in slots.Keys)
+            {
+                if (row >= _bindingCombos.Count) break;
+                var cmb = _bindingCombos[row];
+                ushort code = mouse.ButtonBindings[slot];
+                for (int j = 0; j < cmb.Items.Count; j++)
+                {
+                    if (cmb.Items[j] is BindingItem item && item.Code == code)
+                    { cmb.SelectedIndex = j; break; }
+                }
+                row++;
+            }
+            _updatingBindings = false;
+        }
+
+        private sealed class BindingItem
+        {
+            public ushort Code        { get; }
+            public string DisplayName { get; }
+            public BindingItem(ushort code, string name) { Code = code; DisplayName = name; }
+            public override string ToString() => DisplayName;
+        }
+
+        private sealed class BindingSeparator
+        {
+            public string Label { get; }
+            public BindingSeparator(string label) { Label = label; }
+            public override string ToString() => Label;
         }
 
         private void InitLightingModes()
@@ -920,6 +1109,9 @@ namespace GHelper
 
                 UpdateZoneModeUIState();
             }
+
+            if (mouse.HasButtonBindings())
+                VisualizeButtonBindings();
         }
 
         private void UpdateMotionSyncState()

@@ -16,6 +16,12 @@
             return 4;
         }
 
+        public override bool CanChangeDPICount()
+        {
+            return true;
+        }
+
+
         public override string GetDisplayName()
         {
             return "ROG Keris II Origin (Wired)";
@@ -24,11 +30,12 @@
 
         public override PollingRate[] SupportedPollingrates()
         {
+            if (Booster) return BoosterPollingrates();
             return new PollingRate[] {
                 PollingRate.PR125Hz,
                 PollingRate.PR250Hz,
                 PollingRate.PR500Hz,
-                PollingRate.PR1000Hz
+                PollingRate.PR1000Hz,
             };
         }
 
@@ -72,6 +79,11 @@
                 || lightingMode == LightingMode.BatteryState
                 || lightingMode == LightingMode.React
                 || lightingMode == LightingMode.Off;
+        }
+
+        public override bool IsLightingModeSupportedForZone(LightingMode lm, LightingZone lz)
+        {
+            return true;
         }
 
         public override bool HasAutoPowerOff()

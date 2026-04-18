@@ -54,6 +54,7 @@ namespace GHelper.USB
         GPUMODE = 21,
         AMBIENT = 22,
         BATTERY = 23,
+        GRADIENT = 24,
     }
 
     public enum AuraSpeed : int
@@ -77,9 +78,18 @@ namespace GHelper.USB
 
         private static bool backlight = false;
         private static bool initDirect = false;
+        public static bool sessionLock = false;
 
         public static Color Color1 = Color.White;
         public static Color Color2 = Color.Black;
+
+        public static Color RearColor = Color.White;
+        private static AuraMode rearMode = AuraMode.AuraStatic;
+        public static AuraMode RearMode
+        {
+            get { return rearMode; }
+            set { rearMode = GetModes().ContainsKey(value) ? value : AuraMode.AuraStatic; }
+        }
 
         static bool isACPI = AppConfig.IsTUF() || AppConfig.IsVivoZenPro();
         static bool isStrix = AppConfig.IsAdvancedRGB() && !AppConfig.IsNoDirectRGB();
@@ -146,6 +156,7 @@ namespace GHelper.USB
             { AuraMode.HEATMAP, "Heatmap"},
             { AuraMode.AMBIENT, "Ambient"},
             { AuraMode.BATTERY, "Battery"},
+            { AuraMode.GRADIENT, "Gradient"},
         };
 
         static Aura()
@@ -209,6 +220,19 @@ namespace GHelper.USB
             return _modes;
         }
 
+        private static Dictionary<AuraMode, string> _modesRear = new Dictionary<AuraMode, string>
+        {
+            { AuraMode.AuraStatic, Properties.Strings.AuraStatic },
+            { AuraMode.AuraBreathe, Properties.Strings.AuraBreathe },
+            { AuraMode.AuraColorCycle, Properties.Strings.AuraColorCycle },
+            { AuraMode.AuraRainbow, Properties.Strings.AuraRainbow },
+            { AuraMode.AuraStrobe, Properties.Strings.AuraStrobe },
+        };
+
+        public static Dictionary<AuraMode, string> GetRearModes()
+        {
+            return _modesRear;
+        }
         public static AuraMode Mode
         {
             get { return mode; }
@@ -238,9 +262,14 @@ namespace GHelper.USB
             Color2 = Color.FromArgb(colorCode);
         }
 
+        public static void SetRearColor(int colorCode)
+        {
+            RearColor = Color.FromArgb(colorCode);
+        }
+
         public static bool HasSecondColor()
         {
-            return mode == AuraMode.AuraBreathe && !isACPI;
+            return (mode == AuraMode.AuraBreathe || mode == AuraMode.GRADIENT) && !isACPI;
         }
 
         private static void Timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
@@ -676,9 +705,19 @@ namespace GHelper.USB
             return Color.FromArgb((int)(Color.R * colorDim), (int)(Color.G * colorDim), (int)(Color.B * colorDim));
         }
 
+        public static void ApplyRearLight()
+        {
+            if (!AppConfig.HasRearLight()) return;
+
+            RearMode = (AuraMode)AppConfig.Get("rear_mode");
+            SetRearColor(AppConfig.Get("rear_color"));
+
+            int _speed = (Speed == AuraSpeed.Normal) ? 0xeb : (Speed == AuraSpeed.Fast) ? 0xf5 : 0xe1;
+            AsusHid.Write(new List<byte[]> { AuraMessage(RearMode, RearColor, RearColor, _speed), MESSAGE_SET, MESSAGE_APPLY }, "Rear", AsusHid.REAR_LIGHT_PIDS);
+        }
+
         public static void ApplyAura()
         {
-
             Mode = (AuraMode)AppConfig.Get("aura_mode");
             Speed = (AuraSpeed)AppConfig.Get("aura_speed");
             SetColor(AppConfig.Get("aura_color"));
@@ -694,31 +733,37 @@ namespace GHelper.USB
                 _Color2 = ColorDim(_Color2);
             }
 
-            timer.Enabled = false;
+            timer.Stop();
 
             Logger.WriteLine($"AuraMode: {Mode}");
 
             if (Mode == AuraMode.HEATMAP)
             {
                 CustomRGB.ApplyHeatmap(true);
-                timer.Enabled = true;
                 timer.Interval = 2000;
+                timer.Start();
                 return;
             }
 
             if (Mode == AuraMode.BATTERY)
             {
                 CustomRGB.ApplyBattery();
-                timer.Enabled = true;
                 timer.Interval = 30000;
+                timer.Start();
                 return;
             }
 
             if (Mode == AuraMode.AMBIENT)
             {
                 CustomRGB.ApplyAmbient(true);
-                timer.Enabled = true;
                 timer.Interval = AppConfig.Get("aura_refresh", AppConfig.IsStrix() ? 100 : 300);
+                timer.Start();
+                return;
+            }
+
+            if (Mode == AuraMode.GRADIENT)
+            {
+                CustomRGB.ApplyGradient();
                 return;
             }
 
@@ -765,11 +810,13 @@ namespace GHelper.USB
             }
 
             int _speed = (Speed == AuraSpeed.Normal) ? 0xeb : (Speed == AuraSpeed.Fast) ? 0xf5 : 0xe1;
-            AsusHid.Write(new List<byte[]> { AuraMessage(Mode, _Color1, _Color2, _speed, isSingleColor), MESSAGE_SET, MESSAGE_APPLY });
+            AsusHid.Write(new List<byte[]> { AuraMessage(Mode, _Color1, _Color2, _speed, isSingleColor), MESSAGE_SET, MESSAGE_APPLY }, "Aura", AsusHid.MAIN_AURA_PIDS);
             XGM.LightMode(Mode, _Color1, _Color2, _speed);
 
             if (isACPI)
                 Program.acpi.TUFKeyboardRGB(Mode, Color1, _speed);
+
+            ApplyRearLight();
 
         }
 
@@ -798,6 +845,33 @@ namespace GHelper.USB
             static Color colorUltimate = ColorTranslator.FromHtml(AppConfig.GetString("color_ultimate", "#FF0000"));
             static Color colorStandard = ColorTranslator.FromHtml(AppConfig.GetString("color_standard", "#FFFF00"));
             static Color colorEco = ColorTranslator.FromHtml(AppConfig.GetString("color_eco", "#008000"));
+
+            public static void ApplyGradient()
+            {
+                if (!isStrix && !isStrix4Zone)
+                {
+                    ApplyDirect(Aura.Color1, true);
+                    return;
+                }
+
+                Color[] colors = new Color[AURA_ZONES];
+
+                // keyboard zones 0-3: left (Color2) to right (Color1)
+                for (int z = 0; z < 4; z++)
+                {
+                    float t = z / 3f;
+                    colors[z] = ColorUtils.GetWeightedAverage(Aura.Color2, Aura.Color1, t);
+                }
+
+                // lightbar zones 4-7: left (Color2) to right (Color1)
+                for (int z = 4; z < AURA_ZONES; z++)
+                {
+                    float t = (z - 4) / 3f;
+                    colors[z] = ColorUtils.GetWeightedAverage(Aura.Color2, Aura.Color1, t);
+                }
+
+                ApplyDirect(colors, true);
+            }
 
             public static void ApplyGPUColor(int gpuMode = -1)
             {
@@ -870,7 +944,7 @@ namespace GHelper.USB
 
             public static void ApplyAmbient(bool init = false)
             {
-                if (!backlight) return;
+                if (!backlight || sessionLock) return;
 
                 var bound = Screen.GetBounds(Point.Empty);
                 bound.Y += bound.Height / 3;

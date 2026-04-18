@@ -330,7 +330,7 @@ public class AsusACPI
             MaxGPUBoost = 20;
         }
 
-        if (AppConfig.IsAMDLight())
+        if (AppConfig.IsCPULight())
         {
             MaxTotal = 90;
         }
@@ -340,7 +340,7 @@ public class AsusACPI
             MaxTotal = 93;
         }
 
-        if (AppConfig.IsFA401EA())
+        if (AppConfig.IsOnlyAIMAX())
         {
             MaxTotal = 115;
             MaxCPU = 115;

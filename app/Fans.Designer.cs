@@ -72,42 +72,43 @@ namespace GHelper
             panelUViGPU = new Panel();
             labelUViGPU = new Label();
             labelLeftUViGPU = new Label();
-            trackUViGPU = new TrackBar();
+            trackUViGPU = new RTrackBar();
             panelUV = new Panel();
             labelUV = new Label();
             labelLeftUV = new Label();
-            trackUV = new TrackBar();
+            trackUV = new RTrackBar();
             panelTitleAdvanced = new Panel();
             pictureUV = new PictureBox();
             labelTitleUV = new Label();
             panelTemperature = new Panel();
             labelTemp = new Label();
             labelLeftTemp = new Label();
-            trackTemp = new TrackBar();
+            trackTemp = new RTrackBar();
             panelTitleTemp = new Panel();
             pictureTemp = new PictureBox();
             labelTempLimit = new Label();
             panelDownload = new Panel();
             buttonDownload = new RButton();
+            panelPawnIO = new Panel();
             panelPower = new Panel();
             panelApplyPower = new Panel();
             checkApplyPower = new RCheckBox();
             panelCPU = new Panel();
             labelCPU = new Label();
             labelLeftCPU = new Label();
-            trackCPU = new TrackBar();
+            trackCPU = new RTrackBar();
             panelFast = new Panel();
             labelFast = new Label();
             labelLeftFast = new Label();
-            trackFast = new TrackBar();
+            trackFast = new RTrackBar();
             panelSlow = new Panel();
             labelSlow = new Label();
             labelLeftSlow = new Label();
-            trackSlow = new TrackBar();
+            trackSlow = new RTrackBar();
             panelTotal = new Panel();
             labelTotal = new Label();
             labelLeftTotal = new Label();
-            trackTotal = new TrackBar();
+            trackTotal = new RTrackBar();
             panelTitleCPU = new Panel();
             pictureBoxCPU = new PictureBox();
             labelPowerLimits = new Label();
@@ -124,26 +125,26 @@ namespace GHelper
             panelGPUTemp = new Panel();
             labelGPUTemp = new Label();
             labelGPUTempTitle = new Label();
-            trackGPUTemp = new TrackBar();
+            trackGPUTemp = new RTrackBar();
             panelGPUBoost = new Panel();
             labelGPUBoost = new Label();
             labelGPUBoostTitle = new Label();
-            trackGPUBoost = new TrackBar();
+            trackGPUBoost = new RTrackBar();
             panelGPUPower = new Panel();
             labelGPUPower = new Label();
             labelGPUPowerTitle = new Label();
-            trackGPUPower = new TrackBar();
+            trackGPUPower = new RTrackBar();
             panelGPUMemory = new Panel();
             labelGPUMemory = new Label();
             labelGPUMemoryTitle = new Label();
-            trackGPUMemory = new TrackBar();
+            trackGPUMemory = new RTrackBar();
             panelGPUCore = new Panel();
             labelGPUCore = new Label();
-            trackGPUCore = new TrackBar();
+            trackGPUCore = new RTrackBar();
             labelGPUCoreTitle = new Label();
             panelGPUClockLimit = new Panel();
             labelGPUClockLimit = new Label();
-            trackGPUClockLimit = new TrackBar();
+            trackGPUClockLimit = new RTrackBar();
             labelGPUClockLimitTitle = new Label();
             panelTitleGPU = new Panel();
             pictureGPU = new PictureBox();
@@ -178,6 +179,7 @@ namespace GHelper
             panelTitleTemp.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureTemp).BeginInit();
             panelDownload.SuspendLayout();
+            panelPawnIO.SuspendLayout();
             panelPower.SuspendLayout();
             panelApplyPower.SuspendLayout();
             panelCPU.SuspendLayout();
@@ -563,14 +565,7 @@ namespace GHelper
             // 
             panelAdvanced.AutoSize = true;
             panelAdvanced.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            panelAdvanced.Controls.Add(panelAdvancedAlways);
-            panelAdvanced.Controls.Add(panelAdvancedApply);
-            panelAdvanced.Controls.Add(labelRisky);
-            panelAdvanced.Controls.Add(panelUViGPU);
-            panelAdvanced.Controls.Add(panelUV);
-            panelAdvanced.Controls.Add(panelTitleAdvanced);
-            panelAdvanced.Controls.Add(panelTemperature);
-            panelAdvanced.Controls.Add(panelTitleTemp);
+            panelAdvanced.Controls.Add(panelPawnIO);
             panelAdvanced.Controls.Add(panelDownload);
             panelAdvanced.Dock = DockStyle.Top;
             panelAdvanced.Location = new Point(10, 1768);
@@ -859,6 +854,23 @@ namespace GHelper
             // 
             // panelDownload
             // 
+            // 
+            // panelPawnIO
+            // 
+            panelPawnIO.AutoSize = true;
+            panelPawnIO.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            panelPawnIO.Controls.Add(panelAdvancedAlways);
+            panelPawnIO.Controls.Add(panelAdvancedApply);
+            panelPawnIO.Controls.Add(labelRisky);
+            panelPawnIO.Controls.Add(panelUViGPU);
+            panelPawnIO.Controls.Add(panelUV);
+            panelPawnIO.Controls.Add(panelTitleAdvanced);
+            panelPawnIO.Controls.Add(panelTemperature);
+            panelPawnIO.Controls.Add(panelTitleTemp);
+            panelPawnIO.Dock = DockStyle.Top;
+            panelPawnIO.Name = "panelPawnIO";
+            panelPawnIO.TabIndex = 53;
+            // 
             panelDownload.AutoSize = true;
             panelDownload.Controls.Add(buttonDownload);
             panelDownload.Dock = DockStyle.Top;
@@ -886,7 +898,7 @@ namespace GHelper
             buttonDownload.Secondary = true;
             buttonDownload.Size = new Size(480, 64);
             buttonDownload.TabIndex = 19;
-            buttonDownload.Text = "Download Advanced Settings Plugin";
+            buttonDownload.Text = "Install PawnIO Driver (pawnio.eu)";
             buttonDownload.UseVisualStyleBackColor = false;
             // 
             // panelPower
@@ -1762,6 +1774,8 @@ namespace GHelper
             ((System.ComponentModel.ISupportInitialize)pictureTemp).EndInit();
             panelDownload.ResumeLayout(false);
             panelDownload.PerformLayout();
+            panelPawnIO.ResumeLayout(false);
+            panelPawnIO.PerformLayout();
             panelPower.ResumeLayout(false);
             panelPower.PerformLayout();
             panelApplyPower.ResumeLayout(false);
@@ -1830,11 +1844,11 @@ namespace GHelper
         private Panel panelCPU;
         private Label labelCPU;
         private Label labelLeftCPU;
-        private TrackBar trackCPU;
+        private RTrackBar trackCPU;
         private Panel panelTotal;
         private Label labelTotal;
         private Label labelLeftTotal;
-        private TrackBar trackTotal;
+        private RTrackBar trackTotal;
         private Panel panelTitleCPU;
         private PictureBox pictureBoxCPU;
         private Label labelPowerLimits;
@@ -1842,10 +1856,10 @@ namespace GHelper
         private Panel panelGPUMemory;
         private Label labelGPUMemory;
         private Label labelGPUMemoryTitle;
-        private TrackBar trackGPUMemory;
+        private RTrackBar trackGPUMemory;
         private Panel panelGPUCore;
         private Label labelGPUCore;
-        private TrackBar trackGPUCore;
+        private RTrackBar trackGPUCore;
         private Label labelGPUCoreTitle;
         private Panel panelTitleGPU;
         private PictureBox pictureGPU;
@@ -1854,11 +1868,11 @@ namespace GHelper
         private Panel panelGPUBoost;
         private Label labelGPUBoost;
         private Label labelGPUBoostTitle;
-        private TrackBar trackGPUBoost;
+        private RTrackBar trackGPUBoost;
         private Panel panelGPUTemp;
         private Label labelGPUTemp;
         private Label labelGPUTempTitle;
-        private TrackBar trackGPUTemp;
+        private RTrackBar trackGPUTemp;
         private Panel panelTitleFans;
         private Panel panelApplyFans;
         private Label labelFansResult;
@@ -1871,7 +1885,7 @@ namespace GHelper
         private Panel panelFast;
         private Label labelFast;
         private Label labelLeftFast;
-        private TrackBar trackFast;
+        private RTrackBar trackFast;
         private Panel panelBoost;
         private RComboBox comboModes;
         private RButton buttonAdd;
@@ -1880,7 +1894,7 @@ namespace GHelper
         private Panel panelUV;
         private Label labelUV;
         private Label labelLeftUV;
-        private TrackBar trackUV;
+        private RTrackBar trackUV;
         private PictureBox pictureUV;
         private Label labelTitleUV;
         private RButton buttonApplyAdvanced;
@@ -1891,7 +1905,7 @@ namespace GHelper
         private Panel panelUViGPU;
         private Label labelUViGPU;
         private Label labelLeftUViGPU;
-        private TrackBar trackUViGPU;
+        private RTrackBar trackUViGPU;
         private Panel panelNav;
         private TableLayoutPanel tableNav;
         private RButton buttonCPU;
@@ -1907,7 +1921,7 @@ namespace GHelper
         private Panel panelTemperature;
         private Label labelTemp;
         private Label labelLeftTemp;
-        private TrackBar trackTemp;
+        private RTrackBar trackTemp;
         private Panel panelAdvancedAlways;
         private RCheckBox checkApplyUV;
         private Panel panelPowerMode;
@@ -1917,19 +1931,20 @@ namespace GHelper
         private Label labelPowerModeTitle;
         private Panel panelGPUClockLimit;
         private Label labelGPUClockLimit;
-        private TrackBar trackGPUClockLimit;
+        private RTrackBar trackGPUClockLimit;
         private Label labelGPUClockLimitTitle;
         private RButton buttonCalibrate;
         private Panel panelSlow;
         private Label labelSlow;
         private Label labelLeftSlow;
-        private TrackBar trackSlow;
+        private RTrackBar trackSlow;
         private Panel panelDownload;
         private RButton buttonDownload;
+        private Panel panelPawnIO;
         private Panel panelGPUPower;
         private Label labelGPUPower;
         private Label labelGPUPowerTitle;
-        private TrackBar trackGPUPower;
+        private RTrackBar trackGPUPower;
         private TableLayoutPanel tableLayoutModes;
         private RCheckBox checkFanClamp;
     }
